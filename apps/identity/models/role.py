@@ -4,6 +4,7 @@ from apps.core.models import BaseModel
 
 
 class Role(BaseModel):
+
     name = models.CharField(max_length=100, unique=True)
 
     class Meta:
