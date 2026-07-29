@@ -1,20 +1,24 @@
 from django.core.management.base import BaseCommand
 
-from apps.identity.models import Role
+from .seeders import (
+    role_seeder,
+    country_seeder,
+    province_seeder,
+    city_seeder,
+)
 
 
 class Command(BaseCommand):
 
-    help = "Seed initial system data"
+    help = "Seed initial data"
 
-    def handle(self, *args, **options):
-        roles = [
-            "Administrator",
-            "Warehouse Manager",
-            "Viewer",
-        ]
+    def handle(self, *args, **kwargs):
 
-        for role_name in roles:
-            Role.objects.get_or_create(name=role_name)
+        role_seeder.seed()
+        country_seeder.seed()
+        province_seeder.seed()
+        city_seeder.seed()
 
-        self.stdout.write(self.style.SUCCESS("Initial data seeded successfully."))
+        self.stdout.write(
+            self.style.SUCCESS("Seed completed successfully.")
+        )

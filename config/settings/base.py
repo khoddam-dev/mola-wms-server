@@ -3,20 +3,27 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env")
+
+
 
 
 # SECURITY
 SECRET_KEY = os.getenv("SECRET_KEY")
-
 DEBUG = os.getenv("DEBUG", "False")
 
 ALLOWED_HOSTS = []
 AUTH_USER_MODEL = "identity.User"
 
+
+
 # Application definition
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+WAREHOUSE_CODE_LENGTH =  int(os.getenv("WAREHOUSE_CODE_LENGTH"))
+
 ROOT_URLCONF = "config.urls"
 
 WSGI_APPLICATION = "config.wsgi.application"
@@ -35,6 +42,7 @@ THIRD_PARTY_APPS = []
 LOCAL_APPS = [
     "apps.core",
     "apps.identity",
+    "apps.warehouse",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
