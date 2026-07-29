@@ -22,7 +22,6 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         related_name="users",
     )
 
-    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     objects = UserManager()

@@ -14,8 +14,6 @@ class City(BaseModel):
         related_name="cities",
     )
 
-    is_active = models.BooleanField(default=True)
-
     class Meta:
         db_table = "cities"
         ordering = ["name"]

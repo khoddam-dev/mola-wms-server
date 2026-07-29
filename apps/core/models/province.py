@@ -13,8 +13,6 @@ class Province(BaseModel):
         related_name="provinces",
     )
 
-    is_active = models.BooleanField(default=True)
-
     class Meta:
         db_table = "provinces"
         ordering = ["name"]

@@ -8,8 +8,6 @@ class Country(BaseModel):
     name = models.CharField(max_length=100, unique=True)
     code = models.CharField(max_length=3, unique=True)
 
-    is_active = models.BooleanField(default=True)
-
     class Meta:
         db_table = "countries"
         ordering = ["name"]
