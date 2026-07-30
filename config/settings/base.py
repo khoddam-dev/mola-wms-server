@@ -4,9 +4,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env")
-
 
 
 
@@ -44,6 +44,7 @@ LOCAL_APPS = [
     "apps.identity",
     "apps.warehouse",
     "apps.products",
+    "apps.inventory",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
