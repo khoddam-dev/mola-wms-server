@@ -1,9 +1,15 @@
+from decimal import Decimal
+
 from django.db import models
 
 from apps.core.models import BaseModel
 from apps.products.models import Product
 from apps.warehouse.models import Warehouse
 
+from apps.inventory.exceptions import (
+    InsufficientStockError,
+    InvalidQuantityError,
+)
 
 class Stock(BaseModel):
 
@@ -40,3 +46,29 @@ class Stock(BaseModel):
 
     def __str__(self):
         return f"{self.warehouse} - {self.product}"
+
+    def is_available(self, quantity: Decimal) -> bool:
+        return self.quantity >= quantity
+
+    def increase(self, quantity: Decimal):
+
+        if quantity <= 0:
+            raise InvalidQuantityError(
+                "Quantity must be greater than zero."
+            )
+
+        self.quantity += quantity
+
+    def decrease(self, quantity: Decimal):
+
+        if quantity <= 0:
+            raise InvalidQuantityError(
+                "Quantity must be greater than zero."
+            )
+
+        if quantity > self.quantity:
+            raise InsufficientStockError(
+                "Insufficient stock."
+            )
+
+        self.quantity -= quantity
