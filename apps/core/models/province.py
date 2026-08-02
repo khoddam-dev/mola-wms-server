@@ -7,6 +7,7 @@ from .country import Country
 class Province(BaseModel):
 
     name = models.CharField(max_length=100)
+
     country = models.ForeignKey(
         Country,
         on_delete=models.PROTECT,

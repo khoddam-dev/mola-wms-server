@@ -26,14 +26,13 @@ class Warehouse(BaseModel):
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(0)],
-
+        null=True,
+        blank=True,
     )
 
     description = models.TextField(
         blank=True,
     )
-
-    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "warehouses"

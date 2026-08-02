@@ -6,6 +6,7 @@ from apps.core.models import BaseModel
 class Country(BaseModel):
 
     name = models.CharField(max_length=100, unique=True)
+
     code = models.CharField(max_length=3, unique=True)
 
     class Meta:
