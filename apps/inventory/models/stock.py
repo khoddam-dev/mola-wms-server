@@ -6,10 +6,8 @@ from apps.core.models import BaseModel
 from apps.products.models import Product
 from apps.warehouse.models import Warehouse
 
-from apps.inventory.exceptions import (
-    InsufficientStockError,
-    InvalidQuantityError,
-)
+from apps.inventory.exceptions import InsufficientStockError
+
 
 class Stock(BaseModel):
 
@@ -51,24 +49,11 @@ class Stock(BaseModel):
         return self.quantity >= quantity
 
     def increase(self, quantity: Decimal):
-
-        if quantity <= 0:
-            raise InvalidQuantityError(
-                "Quantity must be greater than zero."
-            )
-
         self.quantity += quantity
 
-    def decrease(self, quantity: Decimal):
+    def decrease(self, quantity):
 
-        if quantity <= 0:
-            raise InvalidQuantityError(
-                "Quantity must be greater than zero."
-            )
-
-        if quantity > self.quantity:
-            raise InsufficientStockError(
-                "Insufficient stock."
-            )
+        if not self.is_available(quantity):
+            raise InsufficientStockError()
 
         self.quantity -= quantity

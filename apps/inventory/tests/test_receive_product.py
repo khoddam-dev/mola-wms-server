@@ -1,11 +1,18 @@
 from decimal import Decimal
 
+from .base import InventoryBaseTest
+
 from apps.inventory.models import (
     InventoryTransaction,
     Stock,
 )
 
-from .base import InventoryBaseTest
+from apps.inventory.exceptions import (
+    InvalidQuantityError,
+    InactiveProductError,
+    InactiveWarehouseError,
+)
+
 
 class ReceiveProductTestCase(InventoryBaseTest):
 
@@ -44,3 +51,53 @@ class ReceiveProductTestCase(InventoryBaseTest):
             transaction.quantity,
             quantity,
         )
+
+    def test_receive_product_should_fail_when_quantity_is_zero(self):
+
+        with self.assertRaises(InvalidQuantityError):
+
+            self.inventory_service.receive_product(
+                warehouse=self.warehouse,
+                product=self.product,
+                quantity=Decimal("0"),
+                user=self.user,
+            )
+
+    def test_receive_product_should_fail_when_quantity_is_negative(self):
+
+        with self.assertRaises(InvalidQuantityError):
+
+            self.inventory_service.receive_product(
+                warehouse=self.warehouse,
+                product=self.product,
+                quantity=Decimal("-5"),
+                user=self.user,
+            )
+
+    def test_receive_product_should_fail_when_product_is_inactive(self):
+
+        self.product.is_active = False
+        self.product.save()
+
+        with self.assertRaises(InactiveProductError):
+
+            self.inventory_service.receive_product(
+                warehouse=self.warehouse,
+                product=self.product,
+                quantity=Decimal("10"),
+                user=self.user,
+            )
+
+    def test_receive_product_should_fail_when_warehouse_is_inactive(self):
+
+        self.warehouse.is_active = False
+        self.warehouse.save()
+
+        with self.assertRaises(InactiveWarehouseError):
+
+            self.inventory_service.receive_product(
+                warehouse=self.warehouse,
+                product=self.product,
+                quantity=Decimal("10"),
+                user=self.user,
+            )

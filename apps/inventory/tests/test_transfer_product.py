@@ -4,8 +4,12 @@ from apps.inventory.models import (
     InventoryTransaction,
     Stock,
 )
+
 from apps.inventory.exceptions import (
     InsufficientStockError,
+    InvalidQuantityError,
+    InactiveProductError,
+    InactiveWarehouseError,
     SameWarehouseTransferError,
 )
 
@@ -56,7 +60,6 @@ class TransferProductTestCase(InventoryBaseTest):
             Decimal("30"),
         )
 
-
         self.assertTrue(
             InventoryTransaction.objects.filter(
                 stock=source_stock,
@@ -65,7 +68,6 @@ class TransferProductTestCase(InventoryBaseTest):
             ).exists()
         )
 
-
         self.assertTrue(
             InventoryTransaction.objects.filter(
                 stock=destination_stock,
@@ -73,7 +75,6 @@ class TransferProductTestCase(InventoryBaseTest):
                 quantity=quantity,
             ).exists()
         )
-
 
     def test_transfer_product_should_fail_when_stock_is_not_available(self):
 
@@ -89,7 +90,6 @@ class TransferProductTestCase(InventoryBaseTest):
                 user=self.user,
             )
 
-
     def test_transfer_product_should_fail_when_warehouses_are_same(self):
 
         with self.assertRaises(SameWarehouseTransferError):
@@ -97,6 +97,73 @@ class TransferProductTestCase(InventoryBaseTest):
             self.inventory_service.transfer_product(
                 source_warehouse=self.warehouse,
                 destination_warehouse=self.warehouse,
+                product=self.product,
+                quantity=Decimal("10"),
+                user=self.user,
+            )
+
+    def test_transfer_product_should_fail_when_quantity_is_zero(self):
+
+        with self.assertRaises(InvalidQuantityError):
+
+            self.inventory_service.issue_product(
+                warehouse=self.warehouse,
+                product=self.product,
+                quantity=Decimal("0"),
+                user=self.user,
+            )
+
+    def test_transfer_product_should_fail_when_quantity_is_negative(self):
+
+        with self.assertRaises(InvalidQuantityError):
+
+            self.inventory_service.issue_product(
+                warehouse=self.warehouse,
+                product=self.product,
+                quantity=Decimal("-5"),
+                user=self.user,
+            )
+
+    def test_transfer_product_should_fail_when_product_is_inactive(self):
+
+        self.product.is_active = False
+        self.product.save()
+
+        with self.assertRaises(InactiveProductError):
+
+            self.inventory_service.transfer_product(
+                source_warehouse=self.warehouse,
+                destination_warehouse=self.second_warehouse,
+                product=self.product,
+                quantity=Decimal("10"),
+                user=self.user,
+            )
+
+    def test_transfer_product_should_fail_when_source_warehouse_is_inactive(self):
+
+        self.warehouse.is_active = False
+        self.warehouse.save()
+
+        with self.assertRaises(InactiveWarehouseError):
+
+            self.inventory_service.transfer_product(
+                source_warehouse=self.warehouse,
+                destination_warehouse=self.second_warehouse,
+                product=self.product,
+                quantity=Decimal("10"),
+                user=self.user,
+            )
+
+    def test_transfer_product_should_fail_when_destination_warehouse_is_inactive(self):
+
+        self.second_warehouse.is_active = False
+        self.second_warehouse.save()
+
+        with self.assertRaises(InactiveWarehouseError):
+
+            self.inventory_service.transfer_product(
+                source_warehouse=self.warehouse,
+                destination_warehouse=self.second_warehouse,
                 product=self.product,
                 quantity=Decimal("10"),
                 user=self.user,
