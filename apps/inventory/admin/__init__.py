@@ -1,2 +1,3 @@
 from .stock_admin import StockAdmin
+from .inventory_adjustment_admin import InventoryAdjustmentAdmin
 from .inventory_transaction_admin import InventoryTransactionAdmin

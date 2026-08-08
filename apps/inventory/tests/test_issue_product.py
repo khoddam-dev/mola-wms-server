@@ -15,10 +15,10 @@ from apps.inventory.exceptions import (
 )
 
 
-
 class IssueProductTestCase(InventoryBaseTest):
 
     def setUp(self):
+
         super().setUp()
 
         self.inventory_service.receive_product(

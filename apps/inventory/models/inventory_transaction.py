@@ -8,7 +8,6 @@ from apps.core.models import BaseModel
 from .stock import Stock
 
 
-
 class InventoryTransaction(BaseModel):
 
     @property
@@ -18,10 +17,12 @@ class InventoryTransaction(BaseModel):
     @property
     def warehouse(self):
         return self.stock.warehouse
-    
+
     class TransactionType(models.TextChoices):
         IN = "IN", "In"
         OUT = "OUT", "Out"
+        ADJUSTMENT_IN = "ADJ_IN", "Adjustment In"
+        ADJUSTMENT_OUT = "ADJ_OUT", "Adjustment Out"
 
     stock = models.ForeignKey(
         Stock,

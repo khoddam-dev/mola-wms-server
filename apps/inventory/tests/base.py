@@ -1,5 +1,8 @@
+from decimal import Decimal
+
 from django.test import TestCase
 
+from apps.inventory.models import Stock
 from apps.warehouse.models import Warehouse
 from apps.identity.models import (
     Role,
@@ -24,7 +27,7 @@ class InventoryBaseTest(TestCase):
 
     def setUp(self):
         self.inventory_service = InventoryService()
-        
+
     @classmethod
     def setUpTestData(cls):
 
@@ -62,9 +65,7 @@ class InventoryBaseTest(TestCase):
             name="Piece",
         )
 
-        cls.brand = Brand.objects.create(
-            name="Samsung"
-        )
+        cls.brand = Brand.objects.create(name="Samsung")
 
         cls.category = Category.objects.create(
             name="Electronics",
@@ -88,4 +89,10 @@ class InventoryBaseTest(TestCase):
             code="WH002",
             name="Backup Warehouse",
             city=cls.city,
+        )
+
+        cls.stock = Stock.objects.create(
+            warehouse=cls.warehouse,
+            product=cls.product,
+            quantity=Decimal("0"),
         )

@@ -12,32 +12,33 @@ from apps.inventory.exceptions import (
 
 from apps.products.models import Product
 from apps.warehouse.models import Warehouse
-from apps.inventory.models import InventoryTransaction, Stock
+from apps.inventory.models import InventoryTransaction, Stock, InventoryAdjustment
 
 
 class InventoryService:
 
     def _validate_quantity(self, quantity: Decimal) -> None:
         if quantity <= 0:
-            raise InvalidQuantityError("Quantity must be greater than zero.")
+            raise InvalidQuantityError()
 
     def _validate_product(self, product: Product) -> None:
         if not product.is_active:
-            raise InactiveProductError("Product is inactive.")
+            raise InactiveProductError()
 
     def _validate_warehouse(self, warehouse: Warehouse) -> None:
 
         if not warehouse.is_active:
-            raise InactiveWarehouseError("Warehouse is inactive.")
+            raise InactiveWarehouseError()
 
     def _validate_transfer_warehouses(
         self, source_warehouse: Warehouse, destination_warehouse: Warehouse
     ) -> None:
 
         if source_warehouse == destination_warehouse:
-            raise SameWarehouseTransferError(
-                "Source and destination warehouses must be different."
-            )
+            raise SameWarehouseTransferError()
+
+    def _lock_stock(self, stock: Stock):
+        return Stock.objects.select_for_update().get(pk=stock.pk)
 
     def _get_stock(self, warehouse: Warehouse, product: Product) -> Stock | None:
 
@@ -48,7 +49,7 @@ class InventoryService:
             ).first()
 
         except Stock.DoesNotExist:
-            raise StockNotFoundError("Stock record not found.")
+            raise StockNotFoundError()
 
     def _get_locked_stock(self, warehouse: Warehouse, product: Product) -> Stock:
 
@@ -59,7 +60,7 @@ class InventoryService:
             )
 
         except Stock.DoesNotExist:
-            raise StockNotFoundError("Stock not found.")
+            raise StockNotFoundError()
 
     def _create_stock(self, warehouse: Warehouse, product: Product) -> Stock:
 
@@ -171,7 +172,6 @@ class InventoryService:
                 description=description,
             )
 
-    # race condition NOT Applyed
     def transfer_product(
         self,
         *,
@@ -195,7 +195,7 @@ class InventoryService:
 
             self._validate_transfer_warehouses(source_warehouse, destination_warehouse)
 
-            source_stock = self._get_stock(
+            source_stock = self._get_locked_stock(
                 warehouse=source_warehouse,
                 product=product,
             )
@@ -245,4 +245,79 @@ class InventoryService:
                 user=user,
                 reference=reference,
                 description=(f"Transfer from {source_warehouse.name}"),
+            )
+
+    def adjust_product(
+        self,
+        *,
+        stock,
+        actual_quantity: Decimal,
+        user,
+        reason: str,
+        description: str = "",
+    ):
+        with transaction.atomic():
+
+            self._validate_quantity(actual_quantity)
+            self._validate_product(stock.product)
+            self._validate_warehouse(stock.warehouse)
+
+            locked_stock = self._lock_stock(stock)
+
+            quantity_before = locked_stock.quantity
+            quantity_after = actual_quantity
+
+            difference = quantity_after - quantity_before
+
+            if difference > 0:
+                locked_stock.increase(difference)
+
+                locked_stock.save(
+                    update_fields=[
+                        "quantity",
+                        "updated_at",
+                    ]
+                )
+
+                self._create_transaction(
+                    stock=locked_stock,
+                    transaction_type=InventoryTransaction.TransactionType.ADJUSTMENT_IN,
+                    quantity=difference,
+                    user=user,
+                    reference="",
+                    description=(
+                        f"Inventory adjustment: "
+                        f"{quantity_before} -> {quantity_after}"
+                    ),
+                )
+
+            elif difference < 0:
+                locked_stock.decrease(abs(difference))
+
+                locked_stock.save(
+                    update_fields=[
+                        "quantity",
+                        "updated_at",
+                    ]
+                )
+
+                self._create_transaction(
+                    stock=locked_stock,
+                    transaction_type=InventoryTransaction.TransactionType.ADJUSTMENT_OUT,
+                    quantity=abs(difference),
+                    user=user,
+                    reference="",
+                    description=(
+                        f"Inventory adjustment: "
+                        f"{quantity_before} -> {quantity_after}"
+                    ),
+                )
+
+            return InventoryAdjustment.objects.create(
+                stock=locked_stock,
+                user=user,
+                quantity_before=quantity_before,
+                quantity_after=quantity_after,
+                reason=reason,
+                description=description,
             )
